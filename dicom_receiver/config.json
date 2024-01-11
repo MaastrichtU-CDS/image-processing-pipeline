@@ -1,0 +1,7 @@
+{
+    "dataFolder": "/data",
+    "airflow": {
+        "url": "http://airflow-webserver:8080",
+        "workflow": "covid19"
+    }
+}
