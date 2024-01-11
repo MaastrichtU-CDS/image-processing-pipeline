@@ -2,6 +2,8 @@
     "dataFolder": "/data",
     "airflow": {
         "url": "http://airflow-webserver:8080",
-        "workflow": "covid19"
+        "workflow": "dicom_import",
+        "username": "airflow",
+        "password": "airflow"
     }
 }

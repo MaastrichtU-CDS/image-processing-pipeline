@@ -3,6 +3,7 @@ import uuid
 import time
 import json
 import requests
+from requests.auth import HTTPBasicAuth
 from pydicom.dataset import Dataset
 
 from pynetdicom import (
@@ -58,13 +59,14 @@ def handle_assoc_close(event):
     os.system("chmod -R 777 %s" % assocFolderDict[event.assoc]["directory"])
     
     if "airflow" in config:
-        fullUrl = config["airflow"]["url"] + "/api/experimental/dags/" + config["airflow"]["workflow"] + "/dag_runs"
+        basic = HTTPBasicAuth(config["airflow"]["username"], config["airflow"]["password"])
+        fullUrl = config["airflow"]["url"] + "/api/v1/dags/" + config["airflow"]["workflow"] + "/dagRuns"
         response = requests.post(fullUrl,
-            json={"conf": json.dumps({"processId": str(assocFolderDict[event.assoc]["uuid"])})},
+            json={"conf": {"processId": str(assocFolderDict[event.assoc]["uuid"])}},
             headers={
-                "Cache-Control": "no-cache",
                 "Content-Type": "application/json"
-            })
+            },
+            auth=basic)
         if response.status_code != 200:
             print(response.text)
 
