@@ -4,6 +4,7 @@ from airflow.operators.bash import BashOperator
 from datetime import datetime
 import os
 import json
+from LinkedDicom import LinkedDicom
 
 dag = DAG("dicom_import",
   schedule_interval=None,
@@ -19,7 +20,7 @@ def _readConfig(processId):
 def receive(ds, **kwargs):
     processId = kwargs['dag_run'].conf['processId']
     dataGiven = _readConfig(processId)
-    print(json.dumps(dataGiven, indent=2))
+    print(f"Received DICOM session with ID {processId} including a valid file")
     return True
 
 receive_data = PythonOperator(
@@ -30,4 +31,25 @@ receive_data = PythonOperator(
     priority_weight=5,
 )
 
-receive_data
+#############################################################################
+
+def ldcm_parse(ds, **kwargs):
+    processId = kwargs['dag_run'].conf['processId']
+    dataGiven = _readConfig(processId)
+    folderPath = dataGiven["dicom_in"]["directory"]
+    liDcm = LinkedDicom.LinkedDicom(None)
+    liDcm.processFolder(folderPath)
+    output_path = os.path.join(dataGiven["directory"], "dicom_in.ttl") 
+    liDcm.saveResults(output_path)
+
+parse_linked_dicom = PythonOperator(
+    task_id='parse_linked_dicom',
+    provide_context=True,
+    python_callable=ldcm_parse,
+    dag=dag,
+    priority_weight=5,
+)
+
+#############################################################################
+
+receive_data >> parse_linked_dicom
